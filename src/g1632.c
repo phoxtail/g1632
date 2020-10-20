@@ -100,19 +100,11 @@ static rt_err_t read_regs(pca9685_device_t dev, rt_uint8_t reg, rt_uint8_t len, 
  * 
  * @param dev the pointer of device structure
  */
-void g1632_restart(g1632_device_t dev)
+void g1632_reset(g1632_device_t dev)
 {
     rt_uint8_t reg;
-    read_regs(dev, PCA9685_MODE1, 1, &reg);
-    if ((reg & 0x80) != 0)
-    {
-        LOG_I("restart..");
-        reg = reg & 0xBF;
-        write_reg(dev, PCA9685_MODE1, 1, &reg);
-        rt_thread_mdelay(1);
-        reg = reg | 0x80; //reset
-        write_reg(dev, PCA9685_MODE1, 1, &reg);
-    }
+    reg = G1632_RESET_MASK;
+    write_reg(dev, G1632_CTRL_BYTE, 1, &reg);
 }
 
 g1632_device_t g1632_init(const char *dev_name, rt_uint8_t i2c_addr)
@@ -144,21 +136,12 @@ g1632_device_t g1632_init(const char *dev_name, rt_uint8_t i2c_addr)
     {
         LOG_E("Unsupported device:'%s'!", dev_name);
         goto __exit;
-    }    
+    }
 
     /* reset before use it */
-    if (write_reg(dev, PCA9685_MODE1, 1, &reg) != RT_EOK)
-    {
-        LOG_E("i2c_bus %s for PCA9685 opened failed!", dev_name);
-        goto __exit;
-    }
-    read_regs(dev, PCA9685_MODE1, 1, &reg);
-    LOG_D("rest mode:%p", reg);
-
+    g1632_reset(dev);
     rt_thread_mdelay(10);
 
-    //pca9685_set_pwm_freq(dev, 50);
-    
     LOG_D("g1632 init done", dev_name);
     return dev;
 
