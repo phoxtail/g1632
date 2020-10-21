@@ -5,9 +5,14 @@
 extern "C" {
 #endif
 
+#include <rtthread.h>
+#include <rtdevice.h>
+#include <rtdef.h>
+
 #define G1632_ADDR_DEFAULT    0x74    /**< G1632 default address */
 
 #define G1632_CTRL_BYTE 0x0
+#define G1632_DVCOM 0x1
 
 #define G1632_HOT_EN_MASK    0x40
 #define G1632_RESET_MASK     0x10

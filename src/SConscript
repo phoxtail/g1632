@@ -1,9 +1,0 @@
-from building import *
-
-cwd     = GetCurrentDir()
-src     = Glob('*.c') + Glob('*.cpp')
-CPPPATH = [cwd + '/../inc']
-
-group = DefineGroup('g1632', src, depend = ['PKG_USING_G1632'], CPPPATH = CPPPATH)
-
-Return('group')
