@@ -19,6 +19,9 @@ extern "C" {
 #define G1632_WR_TO_NVM_MASK 0x8
 #define G1632_OUT_EN_MASK    0x2
 
+#define BEEP_PIN_NUM            35  /* PB0 */
+
+
 /* g1632 device structure */
 struct g1632_device
 {
@@ -30,6 +33,9 @@ typedef struct g1632_device *g1632_device_t;
 void g1632_reset(g1632_device_t dev);
 g1632_device_t g1632_init(const char *dev_name, rt_uint8_t i2c_addr);
 void g1632_deinit(g1632_device_t dev);
+
+rt_err_t g1632_get_gamma(g1632_device_t dev, rt_uint8_t channel, rt_uint16_t * value);
+rt_err_t g1632_set_gamma(g1632_device_t dev, rt_uint8_t channel, rt_uint16_t value);
 
 #ifdef __cplusplus
 }

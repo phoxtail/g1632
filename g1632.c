@@ -1,8 +1,8 @@
 #include "g1632.h"
 
 // #define DBG_ENABLE
-#define DBG_SECTION_NAME     "pca9685"
-#define DBG_LEVEL            DBG_INFO
+#define DBG_SECTION_NAME     "g1632"
+#define DBG_LEVEL            DBG_LOG
 #define DBG_COLOR
 #include <rtdbg.h>
 
@@ -140,9 +140,37 @@ rt_err_t g1632_set_gamma(g1632_device_t dev, rt_uint8_t channel, rt_uint16_t val
         }
 
         res = write_reg(dev, index_addr, 2, regs);
+        LOG_D("write_reg index %d, regs[0] 0x%02x, regs[1] 0x%02x\n", index_addr, regs[0], regs[1]);
     }
 
     return res;
+}
+
+rt_err_t g1632_get_gamma(g1632_device_t dev, rt_uint8_t channel, rt_uint16_t * value) {
+    if (channel >= 14) {
+        return -RT_ERROR; 
+    }
+
+    rt_int8_t res = 0;
+    rt_uint8_t control_byte = 0;
+    res = read_reg(dev, G1632_CTRL_BYTE, 1, &control_byte);
+    if (res != RT_EOK || (control_byte & G1632_WR_TO_NVM_MASK) || (control_byte & G1632_RESET_MASK )) {
+        return -RT_ERROR;
+    }
+
+    rt_uint8_t index_addr, regs[2];
+    if (channel % 2) {
+        index_addr = 2 + (channel/2) * 3 + 1;
+        res = read_reg(dev, index_addr, 2, regs);
+        *value = (((rt_uint16_t)(regs[0] & 0x3)) << 8) + regs[1];
+    } else {
+        index_addr = 2 + (channel/2) * 3;
+        res = read_reg(dev, index_addr, 2, regs);
+        *value = (((rt_uint16_t)(regs[0] & 0x3f)) << 4) + (regs[1] >> 4);
+    }
+
+    LOG_D("read_reg index %d, regs[0] 0x%02x, regs[1] 0x%02x\n", index_addr, regs[0], regs[1]);
+    return res;    
 }
 
 /**
@@ -200,6 +228,11 @@ void g1632_reset(g1632_device_t dev)
 g1632_device_t g1632_init(const char *dev_name, rt_uint8_t i2c_addr)
 {
     g1632_device_t dev = RT_NULL;
+
+    /* 蜂鸣器引脚为输出模式 */
+    rt_pin_mode(BEEP_PIN_NUM, PIN_MODE_OUTPUT);
+    /* 设置低电平 */
+    rt_pin_write(BEEP_PIN_NUM, PIN_LOW);    
 
     dev = rt_calloc(1, sizeof(struct g1632_device));
     if (dev == RT_NULL)
