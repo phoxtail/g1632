@@ -124,6 +124,9 @@ rt_err_t g1632_set_gamma(g1632_device_t dev, rt_uint8_t channel, rt_uint16_t val
     if (res != RT_EOK || (control_byte & G1632_WR_TO_NVM_MASK) || (control_byte & G1632_RESET_MASK )) {
         return -RT_ERROR;
     }
+
+    control_byte &= (~(G1632_OUT_EN_MASK));
+    write_reg(dev, G1632_CTRL_BYTE, 1, &control_byte);
     
     rt_uint8_t index_addr, temp;
     index_addr = 2 + (channel/2) * 3;
@@ -143,6 +146,9 @@ rt_err_t g1632_set_gamma(g1632_device_t dev, rt_uint8_t channel, rt_uint16_t val
         LOG_D("write_reg index %d, regs[0] 0x%02x, regs[1] 0x%02x\n", index_addr, regs[0], regs[1]);
     }
 
+    control_byte |= (G1632_OUT_EN_MASK);
+    write_reg(dev, G1632_CTRL_BYTE, 1, &control_byte);
+
     return res;
 }
 
@@ -161,14 +167,16 @@ rt_err_t g1632_get_gamma(g1632_device_t dev, rt_uint8_t channel, rt_uint16_t * v
     rt_uint8_t index_addr, regs[2];
     if (channel % 2) {
         index_addr = 2 + (channel/2) * 3 + 1;
-        res = read_reg(dev, index_addr, 2, regs);
+        res = read_reg(dev, index_addr, 1, regs);
+        res = read_reg(dev, index_addr + 1, 1, regs + 1);
         *value = (((rt_uint16_t)(regs[0] & 0x3)) << 8) + regs[1];
     } else {
         index_addr = 2 + (channel/2) * 3;
-        res = read_reg(dev, index_addr, 2, regs);
+        res = read_reg(dev, index_addr, 1, regs);
+        res = read_reg(dev, index_addr + 1, 1, regs + 1);
         *value = (((rt_uint16_t)(regs[0] & 0x3f)) << 4) + (regs[1] >> 4);
     }
-
+    
     LOG_D("read_reg index %d, regs[0] 0x%02x, regs[1] 0x%02x\n", index_addr, regs[0], regs[1]);
     return res;    
 }
@@ -229,10 +237,11 @@ g1632_device_t g1632_init(const char *dev_name, rt_uint8_t i2c_addr)
 {
     g1632_device_t dev = RT_NULL;
 
-    /* 蜂鸣器引脚为输出模式 */
-    rt_pin_mode(BEEP_PIN_NUM, PIN_MODE_OUTPUT);
-    /* 设置低电平 */
-    rt_pin_write(BEEP_PIN_NUM, PIN_LOW);    
+    rt_pin_mode(G1632_BANK_SEL_PIN, PIN_MODE_OUTPUT);
+    rt_pin_mode(G1632_NWR_MCU_PIN, PIN_MODE_OUTPUT);
+
+    rt_pin_write(G1632_BANK_SEL_PIN, PIN_LOW);
+    rt_pin_write(G1632_NWR_MCU_PIN, PIN_HIGH);
 
     dev = rt_calloc(1, sizeof(struct g1632_device));
     if (dev == RT_NULL)
@@ -260,10 +269,6 @@ g1632_device_t g1632_init(const char *dev_name, rt_uint8_t i2c_addr)
         LOG_E("Unsupported device:'%s'!", dev_name);
         goto __exit;
     }
-
-    /* reset before use it */
-    g1632_reset(dev);
-    rt_thread_mdelay(10);
 
     LOG_D("g1632 init done", dev_name);
     return dev;

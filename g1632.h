@@ -8,6 +8,7 @@ extern "C" {
 #include <rtthread.h>
 #include <rtdevice.h>
 #include <rtdef.h>
+#include <drv_common.h>
 
 #define G1632_ADDR_DEFAULT    0x74    /**< G1632 default address */
 
@@ -19,8 +20,8 @@ extern "C" {
 #define G1632_WR_TO_NVM_MASK 0x8
 #define G1632_OUT_EN_MASK    0x2
 
-#define BEEP_PIN_NUM            35  /* PB0 */
-
+#define G1632_BANK_SEL_PIN    GET_PIN(C, 13)
+#define G1632_NWR_MCU_PIN    GET_PIN(C, 14)
 
 /* g1632 device structure */
 struct g1632_device

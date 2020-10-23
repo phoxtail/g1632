@@ -1,5 +1,6 @@
 #include <rtthread.h>
 #include <stdlib.h>
+#include <string.h>
 #include "g1632.h"
 
 // #define DBG_ENABLE
@@ -45,8 +46,17 @@ int g1632_example(int argc, char** argv)
 
         if (tid1 != RT_NULL)
             rt_thread_startup(tid1);        
-    } else {
-        LOG_D("invalid command\n");
+    } else if (argc == 2) {
+        if(!strcmp(argv[1], "reset")) {
+            g1632_device_t dev = RT_NULL;
+            dev = g1632_init(I2C_BUS, RT_NULL);
+            if (dev == RT_NULL)
+                return 0;
+                        /* reset before use it */
+            g1632_reset(dev);
+            rt_thread_mdelay(10);
+            LOG_D("reset done\n");
+        }
     }
 
     return 0;
