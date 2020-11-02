@@ -233,7 +233,7 @@ void g1632_reset(g1632_device_t dev)
     write_reg(dev, G1632_CTRL_BYTE, 1, &reg);
 }
 
-g1632_device_t g1632_init(const char *dev_name, rt_uint8_t i2c_addr)
+g1632_device_t g1632_init(void)
 {
     g1632_device_t dev = RT_NULL;
 
@@ -243,30 +243,28 @@ g1632_device_t g1632_init(const char *dev_name, rt_uint8_t i2c_addr)
     rt_pin_write(G1632_BANK_SEL_PIN, PIN_LOW);
     rt_pin_write(G1632_NWR_MCU_PIN, PIN_HIGH);
 
-    dev = rt_calloc(1, sizeof(struct g1632_device));
+    dev = rt_calloc(4, sizeof(struct g1632_device));
     if (dev == RT_NULL)
     {
         LOG_E("Can't allocate memory for g1632 device on '%s' ", dev_name);
         goto __exit;
     }
 
-    dev->bus = rt_device_find(dev_name);
-    if (dev->bus == RT_NULL)
+    dev[0].bus = rt_device_find("i2c1");
+    dev[0].bank_sel_pin = GET_PIN(C, 13);
+    dev[0].nwr_mcu_pin = GET_PIN(C, 14);
+    dev[1].bus = rt_device_find("i2c2");
+    dev[1].bank_sel_pin = GET_PIN(B, 6);
+    dev[1].nwr_mcu_pin = GET_PIN(B, 7);
+    dev[2].bus = rt_device_find("i2c3");
+    dev[2].bank_sel_pin = GET_PIN(B, 0);
+    dev[2].nwr_mcu_pin = GET_PIN(B, 1);
+    dev[3].bus = rt_device_find("i2c4");
+    dev[3].bank_sel_pin = GET_PIN(A, 6);
+    dev[3].nwr_mcu_pin = GET_PIN(A, 7);
+    if (dev[0].bus == RT_NULL || dev[1].bus == RT_NULL || dev[2].bus == RT_NULL || dev[3].bus == RT_NULL)
     {
-        LOG_E("i2c_bus %s for g1632 not found!", dev_name);
-        goto __exit;
-    }
-
-    if (dev->bus->type == RT_Device_Class_I2CBUS)
-    {
-        if (i2c_addr != RT_NULL)
-            dev->i2c_addr = i2c_addr;
-        else
-            dev->i2c_addr = G1632_ADDR_DEFAULT;
-    }
-    else
-    {
-        LOG_E("Unsupported device:'%s'!", dev_name);
+        LOG_E("i2c_bus for g1632 not found!");
         goto __exit;
     }
 

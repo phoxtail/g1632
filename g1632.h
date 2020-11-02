@@ -28,11 +28,13 @@ struct g1632_device
 {
     rt_device_t bus;
     rt_uint8_t i2c_addr;
+    rt_base_t bank_sel_pin;
+    rt_base_t nwr_mcu_pin;
 };
 typedef struct g1632_device *g1632_device_t;
 
 void g1632_reset(g1632_device_t dev);
-g1632_device_t g1632_init(const char *dev_name, rt_uint8_t i2c_addr);
+g1632_device_t g1632_init(void);
 void g1632_deinit(g1632_device_t dev);
 
 rt_err_t g1632_get_gamma(g1632_device_t dev, rt_uint8_t channel, rt_uint16_t * value);
