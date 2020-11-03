@@ -1,16 +1,20 @@
-# RT-Thread building script for bridge
-
-import os
 from building import *
+Import('rtconfig')
 
-cwd = GetCurrentDir()
-objs = []
-list = os.listdir(cwd)
+src   = []
+cwd   = GetCurrentDir()
 
+# add g1632 src files.
 if GetDepend('PKG_USING_G1632'):
-    for d in list:
-        path = os.path.join(cwd, d)
-        if os.path.isfile(os.path.join(path, 'SConscript')):
-            objs = objs + SConscript(os.path.join(d, 'SConscript'))
+    src += Glob('g1632.c')
 
-Return('objs')
+if GetDepend('PKG_USING_G1632_EXAMPLE'):
+    src += Glob('g1632_example.c')
+
+# add g1632 include path.
+path  = [cwd]
+
+# add src and include to group.
+group = DefineGroup('g1632', src, depend = ['PKG_USING_G1632'], CPPPATH = path)
+
+Return('group')
