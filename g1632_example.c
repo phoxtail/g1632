@@ -25,11 +25,16 @@ static void g1632_example_entry(void *parameter)
     if (dev == RT_NULL)
         goto _exit;
 
+    g1632_reset(&dev[0]);
+    rt_thread_mdelay(100);
+
     rt_uint16_t value;
     g1632_get_gamma(&dev[0], (rt_uint8_t)(((rt_int32_t *)parameter)[0]), &value);
     LOG_D("g1632 gamma for channel %d set to %d from %d\n", (((rt_int32_t *)parameter)[0]), (((rt_int32_t *)parameter)[1]), value);
 
-    g1632_set_gamma(dev, (rt_uint8_t)(((rt_int32_t *)parameter)[0]), (rt_uint16_t)(((rt_int32_t *)parameter)[1]));
+    g1632_disable_output(&dev[0]);
+    g1632_set_gamma(&dev[0], (rt_uint8_t)(((rt_int32_t *)parameter)[0]), (rt_uint16_t)(((rt_int32_t *)parameter)[1]));
+    g1632_enable_output(&dev[0]);
     rt_thread_mdelay(10);
 
 _exit:    
@@ -63,66 +68,6 @@ int g1632_example(int argc, char** argv)
     }
 
     return 0;
-}
-
-int main(void)
-{
-    int count = 1;
-
-    x = 0;
-    y = 0;
-
-    while (1)
-    {
-
-        for (int i=0; i< ;i++) {
-            for (int j=0; j< ;j++) {
-                if (){
-                    g1632_set_gamma(&dev[i], j, &value);
-                } else () {
-                    g1632_set_gamma(&dev[i], j, &value);
-                }
-            }
-        }
-
-        g1632_enable_output(&dev[0]);
-        g1632_enable_output(&dev[1]);
-        g1632_enable_output(&dev[2]);
-        g1632_enable_output(&dev[3]);
-
-        rt_thread_mdelay(200);
-
-        for (int i=0; i< ;i++) {
-            for (int j=0; j< ;j++) {
-                if (){
-                    g1632_set_gamma(&dev[i], j, &value);
-                } else () {
-                    g1632_set_gamma(&dev[i], j, &value);
-                } else () {
-                    g1632_set_gamma(&dev[i], j, &value);
-                }
-            }
-        }
-        
-        rt_thread_mdelay(200);
-
-        g1632_disable_output(&dev[0]);
-        g1632_disable_output(&dev[1]);
-        g1632_disable_output(&dev[2]);
-        g1632_disable_output(&dev[3]);
-
-        g1632_get_gamma(&dev[0], (rt_uint8_t)(((rt_int32_t *)parameter)[0]), &value);
-        LOG_D("g1632 gamma for channel %d set to %d from %d\n", (((rt_int32_t *)parameter)[0]), (((rt_int32_t *)parameter)[1]), value);
-
-        g1632_set_gamma(dev, (rt_uint8_t)(((rt_int32_t *)parameter)[0]), (rt_uint16_t)(((rt_int32_t *)parameter)[1]));
-        rt_thread_mdelay(10);
-        rt_thread_mdelay(1000);
-
-        x++;
-        y++;
-    }
-
-    return RT_EOK;
 }
 
 #ifdef FINSH_USING_MSH

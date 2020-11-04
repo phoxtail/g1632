@@ -39,6 +39,8 @@ void g1632_deinit(g1632_device_t dev);
 
 rt_err_t g1632_get_gamma(g1632_device_t dev, rt_uint8_t channel, rt_uint16_t * value);
 rt_err_t g1632_set_gamma(g1632_device_t dev, rt_uint8_t channel, rt_uint16_t value);
+rt_err_t g1632_enable_output(g1632_device_t dev);
+rt_err_t g1632_disable_output(g1632_device_t dev);
 
 #ifdef __cplusplus
 }

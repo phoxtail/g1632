@@ -124,9 +124,6 @@ rt_err_t g1632_set_gamma(g1632_device_t dev, rt_uint8_t channel, rt_uint16_t val
     if (res != RT_EOK || (control_byte & G1632_WR_TO_NVM_MASK) || (control_byte & G1632_RESET_MASK )) {
         return -RT_ERROR;
     }
-
-    control_byte &= (~(G1632_OUT_EN_MASK));
-    write_reg(dev, G1632_CTRL_BYTE, 1, &control_byte);
     
     rt_uint8_t index_addr, temp;
     index_addr = 2 + (channel/2) * 3;
@@ -145,9 +142,6 @@ rt_err_t g1632_set_gamma(g1632_device_t dev, rt_uint8_t channel, rt_uint16_t val
         res = write_reg(dev, index_addr, 2, regs);
         LOG_D("write_reg index %d, regs[0] 0x%02x, regs[1] 0x%02x\n", index_addr, regs[0], regs[1]);
     }
-
-    control_byte |= (G1632_OUT_EN_MASK);
-    write_reg(dev, G1632_CTRL_BYTE, 1, &control_byte);
 
     return res;
 }
@@ -222,6 +216,34 @@ rt_err_t g1632_get_dvcom(g1632_device_t dev, rt_uint8_t *value)
     return res;
 }
 
+rt_err_t g1632_enable_output(g1632_device_t dev)
+{
+    rt_int8_t res = 0;
+    rt_uint8_t control_byte = 0;
+    res = read_reg(dev, G1632_CTRL_BYTE, 1, &control_byte);
+    if (res != RT_EOK || (control_byte & G1632_WR_TO_NVM_MASK) || (control_byte & G1632_RESET_MASK )) {
+        return -RT_ERROR;
+    }
+
+    control_byte |= (G1632_OUT_EN_MASK);
+    write_reg(dev, G1632_CTRL_BYTE, 1, &control_byte);
+    return res;
+}
+
+rt_err_t g1632_disable_output(g1632_device_t dev)
+{
+    rt_int8_t res = 0;
+    rt_uint8_t control_byte = 0;
+    res = read_reg(dev, G1632_CTRL_BYTE, 1, &control_byte);
+    if (res != RT_EOK || (control_byte & G1632_WR_TO_NVM_MASK) || (control_byte & G1632_RESET_MASK )) {
+        return -RT_ERROR;
+    }
+
+    control_byte &= (~(G1632_OUT_EN_MASK));
+    write_reg(dev, G1632_CTRL_BYTE, 1, &control_byte);
+    return res;
+}
+
 /**
  * @brief restart g1632 
  * 
@@ -237,38 +259,44 @@ g1632_device_t g1632_init(void)
 {
     g1632_device_t dev = RT_NULL;
 
-    rt_pin_mode(G1632_BANK_SEL_PIN, PIN_MODE_OUTPUT);
-    rt_pin_mode(G1632_NWR_MCU_PIN, PIN_MODE_OUTPUT);
-
-    rt_pin_write(G1632_BANK_SEL_PIN, PIN_LOW);
-    rt_pin_write(G1632_NWR_MCU_PIN, PIN_HIGH);
-
     dev = rt_calloc(4, sizeof(struct g1632_device));
     if (dev == RT_NULL)
     {
-        LOG_E("Can't allocate memory for g1632 device on '%s' ", dev_name);
+        LOG_E("Can't allocate memory for g1632 device");
         goto __exit;
     }
 
     dev[0].bus = rt_device_find("i2c1");
     dev[0].bank_sel_pin = GET_PIN(C, 13);
     dev[0].nwr_mcu_pin = GET_PIN(C, 14);
+    dev[0].i2c_addr = G1632_ADDR_DEFAULT;
     dev[1].bus = rt_device_find("i2c2");
     dev[1].bank_sel_pin = GET_PIN(B, 6);
     dev[1].nwr_mcu_pin = GET_PIN(B, 7);
+    dev[1].i2c_addr = G1632_ADDR_DEFAULT;
     dev[2].bus = rt_device_find("i2c3");
     dev[2].bank_sel_pin = GET_PIN(B, 0);
     dev[2].nwr_mcu_pin = GET_PIN(B, 1);
+    dev[2].i2c_addr = G1632_ADDR_DEFAULT;
     dev[3].bus = rt_device_find("i2c4");
     dev[3].bank_sel_pin = GET_PIN(A, 6);
     dev[3].nwr_mcu_pin = GET_PIN(A, 7);
+    dev[3].i2c_addr = G1632_ADDR_DEFAULT;
     if (dev[0].bus == RT_NULL || dev[1].bus == RT_NULL || dev[2].bus == RT_NULL || dev[3].bus == RT_NULL)
     {
         LOG_E("i2c_bus for g1632 not found!");
         goto __exit;
     }
 
-    LOG_D("g1632 init done", dev_name);
+    for (int i = 0; i < 4; i++) {
+        rt_pin_mode(dev[i].bank_sel_pin, PIN_MODE_OUTPUT);
+        rt_pin_mode(dev[i].nwr_mcu_pin, PIN_MODE_OUTPUT);
+
+        rt_pin_write(dev[i].bank_sel_pin, PIN_LOW);
+        rt_pin_write(dev[i].nwr_mcu_pin, PIN_HIGH);
+    }
+
+    LOG_D("g1632 init done");
     return dev;
 
 __exit:
